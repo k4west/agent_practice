@@ -1,0 +1,8 @@
+ipykernel==6.29.5
+langchain==0.3.8
+langchain_experimental==0.3.3
+langchain_openai==0.2.9
+langchain_ollama==0.2.0
+langchain-teddynote==0.3.37
+openai==1.55.0
+python-dotenv==1.0.1
