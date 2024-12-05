@@ -3,6 +3,7 @@ from langchain_teddynote import logging
 import warnings
 
 import requests
+from lxml import html
 from typing import List
 from langchain_community.utilities.dalle_image_generator import DallEAPIWrapper
 from langchain.tools import tool
@@ -41,66 +42,71 @@ def generate_image(query: str, model: str="dall-e-3", size: str="1024x1024", qua
     return image_url
 
 
+def get_context(link):
+    response = requests.get(link)
+    response.content
+    return ''
+
+
 @tool
-def crawling(query: str, must: List[str | None] = [], inclusion: List[str | None] = [], exclusion: List[str | None] = []):
-    '''
-    
-    ...
-    
-    Parameters:
-        query (str): 질문
-        inclusion (List[str]): 포함시키고 싶은 단어(없을 수 도 있음)
-        must (List[str]): 꼭 포함시키고 싶은 단어 목록
-        exclusion (List[str]): 제외하고 싶은 단어 목록, 숫자는 적용이 잘 안됨
+def get_popular_news():
+    response = requests.get('https://news.naver.com/main/ranking/popularDay.naver')
+    if response.status_code != 200:
+        print(response)
+        return {}, {}
+    popular_news = {} # 번호: [{링크, 제목}, ...]
+    press_info = {} # 언론사: 번호
+    office_cards = html.fromstring(response.content).xpath('//*[contains(@class, "_officeCard _officeCard")]')
+    for office_card in office_cards:
+        for item in office_card.xpath("div"):
+            press_num = item.xpath('a')[0].attrib['href'].split('com/press/')[1][:3] # https://media.naver.com/press/{press_num}/ranking?type=popular
+            press_name = item.xpath("a/*[@class='rankingnews_name']")[0].text
+            press_info[press_name] = press_num
+            popular_news[press_num] = []
+            for li in item.xpath('ul/li/div/a'):
+                link = li.attrib["href"]
+                title = li.text
+                popular_news[press_num].append({"link": link, "title": title})
+                # context = get_context(link)
+                # popular_news[press_num].append({"link": link, "title": title, "context": context})
+    return popular_news, press_info
 
-    Returns:
-        ... (): ...
 
-    ---
-    ```python
-    from agent_tools.custom_tools import f
-
-    image_url = f.invoke()
-    '''
-
-    base_url = 'https://www.google.com/search?'
+@tool
+def query_news(query):
     params = {
-        "as_q": query,
-        "as_epq": " ".join(must), # ""로 감싸기
-        "as_oq": " ".join(inclusion), # OR
-        "as_eq": " ".join(exclusion), # 앞에 -붙이기
-        'as_nlo': '',
-        'as_nhi': '',
-        'lr': '',
-        'cr': '',
-        'as_qdr': 'all',
-        'as_sitesearch': '',
-        'as_occt': 'any',
-        'as_filetype': '',
-        'tbs': '',
+        'where': 'news',
+        'ie': 'utf8',
+        'sm': 'nws_hty',
+        'query': query,
     }
-    headers = {
-        'Referer': 'https://www.google.com/',
-        'Upgrade-Insecure-Requests': '1',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
-        'sec-ch-prefers-color-scheme': 'dark',
-        'sec-ch-ua': '"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
-        'sec-ch-ua-arch': '"x86"',
-        'sec-ch-ua-bitness': '"64"',
-        'sec-ch-ua-form-factors': '"Desktop"',
-        'sec-ch-ua-full-version': '"131.0.6778.108"',
-        'sec-ch-ua-full-version-list': '"Google Chrome";v="131.0.6778.108", "Chromium";v="131.0.6778.108", "Not_A Brand";v="24.0.0.0"',
-        'sec-ch-ua-mobile': '?0',
-        'sec-ch-ua-model': '""',
-        'sec-ch-ua-platform': '"Windows"',
-        'sec-ch-ua-platform-version': '"15.0.0"',
-        'sec-ch-ua-wow64': '?0',
-    }
-    response = requests.post(base_url, params=params, headers=headers)
-    print(response.status_code) # 405
-    print(response.content)
-    print(response.url)
-    return None
+    response = requests.get('https://search.naver.com/search.naver', params=params)
+    if response.status_code != 200:
+        print(response)
+        return {}, {}
+    news = {} # 번호: [{링크, 제목}, ...]
+    press_info = {} # 언론사: 번호
+    sections = html.fromstring(response.content).xpath('//*[@id="main_pack"]/section//*[contains(@class, "news_area")]')
+    for section in sections:
+        items = section.xpath("div")
+        info = items[0].xpath('div[2]/a')
+        press_name = info[0].text_content().strip()
+        link = [i.attrib.get('href', '') for i in info if 'naver' in i.attrib.get('href', '')]
+        if link:
+            link = link[0]
+        else:
+            link = 'article/'
+        press_num = link.split('article/')[1][:3]
+        title = [i.attrib.get('title', '') for i in items[1].xpath('a') if i.attrib.get('title', '')][0]
+        if press_name not in press_info:
+            press_info[press_name] = press_num
+            news[press_num or press_name] = []
+        # news[press_num or press_name].append({"link": link, "title": title})
+        context = get_context(link) if 'naver' in link else items[1].xpath('div')[0].text_content()
+        news[press_num or press_name].append({"link": link, "title": title, "context": context})
+    return news, press_info
 
 
-crawling.invoke({"query": '대한민국', "must": ['대통령'], "inclusion": [''], "exclusion": ['2019']})
+# get_popular_news.invoke()
+
+

@@ -4,5 +4,6 @@ langchain_experimental==0.3.3
 langchain_openai==0.2.9
 langchain_ollama==0.2.0
 langchain-teddynote==0.3.37
+lxml==5.3.0
 openai==1.55.0
 python-dotenv==1.0.1
