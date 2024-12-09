@@ -8,9 +8,13 @@ from typing import List
 from langchain_community.utilities.dalle_image_generator import DallEAPIWrapper
 from langchain.tools import tool
 
-load_dotenv()
-logging.langsmith("agent-tools")
-warnings.filterwarnings("ignore") # 경고 메시지 무시
+
+from typing import Annotated
+from langchain_experimental.utilities import PythonREPL
+
+# load_dotenv()
+# logging.langsmith("agent-tools")
+# warnings.filterwarnings("ignore") # 경고 메시지 무시
 
 
 def generate_image(query: str, model: str="dall-e-3", size: str="1024x1024", quality: str | None="standard", n: int=1) -> str:
@@ -50,6 +54,9 @@ def get_context(link):
 
 @tool
 def get_popular_news():
+    '''
+    get_popular_news
+    '''
     response = requests.get('https://news.naver.com/main/ranking/popularDay.naver')
     if response.status_code != 200:
         print(response)
@@ -74,6 +81,7 @@ def get_popular_news():
 
 @tool
 def query_news(query):
+    '''query_news'''
     params = {
         'where': 'news',
         'ie': 'utf8',
@@ -107,6 +115,57 @@ def query_news(query):
     return news, press_info
 
 
-# get_popular_news.invoke()
+# 도구 생성
+@tool
+def python_repl_tool(
+    code: Annotated[str, "The python code to execute to generate your chart."],
+):
+    """Use this to execute python code. If you want to see the output of a value,
+    you should print it out with `print(...)`. This is visible to the user."""
+    result = ""
+    try:
+        result = PythonREPL().run(code)
+    except BaseException as e:
+        print(f"Failed to execute. Error: {repr(e)}")
+    finally:
+        return result
+    
+
+@tool
+def search_news(query):
+    """
+    Search Naver News by input keyword
+    """
+    params = {
+        'where': 'news',
+        'ie': 'utf8',
+        'sm': 'nws_hty',
+        'query': query,
+    }
+    response = requests.get('https://search.naver.com/search.naver', params=params)
+    if response.status_code != 200:
+        print(response)
+        return {}, {}
+    news = {} # 번호: [{링크, 제목}, ...]
+    press_info = {} # 언론사: 번호
+    sections = html.fromstring(response.content).xpath('//*[@id="main_pack"]/section//*[contains(@class, "news_area")]')
+    for section in sections:
+        items = section.xpath("div")
+        info = items[0].xpath('div[2]/a')
+        press_name = info[0].text_content().strip()
+        link = [i.attrib.get('href', '') for i in info if 'naver' in i.attrib.get('href', '')]
+        if link:
+            link = link[0]
+        else:
+            link = 'article/'
+        press_num = link.split('article/')[1][:3]
+        title = [i.attrib.get('title', '') for i in items[1].xpath('a') if i.attrib.get('title', '')][0]
+        if press_name not in press_info:
+            press_info[press_name] = press_num
+            news[press_num or press_name] = []
+        news[press_num or press_name].append({"link": link, "content": title})
+    # return news, press_info
+    result = sum([*news.values()], [])
+    return result
 
 
