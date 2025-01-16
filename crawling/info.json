@@ -1,0 +1,75 @@
+{
+    "file_types": {
+        "문서 파일": {
+            "PDF": "pdf",
+            "Word (DOC)": "doc",
+            "Word (DOCX)": "docx",
+            "엑셀 (XLS)": "xls",
+            "엑셀 (XLSX)": "xlsx",
+            "PowerPoint (PPT)": "ppt",
+            "PowerPoint (PPTX)": "pptx",
+            "텍스트 (TXT)": "txt",
+            "OpenDocument 텍스트 (ODT)": "odt",
+            "RTF (서식 있는 텍스트)": "rtf"
+        },
+        "이미지 파일": {
+            "JPEG": "jpg",
+            "JPEG (또는 JPG)": "jpeg",
+            "PNG": "png",
+            "GIF": "gif",
+            "BMP": "bmp",
+            "TIFF": "tiff"
+        },
+        "오디오/비디오 파일": {
+            "MP3 (오디오)": "mp3",
+            "WAV (오디오)": "wav",
+            "MP4 (비디오)": "mp4",
+            "AVI (비디오)": "avi",
+            "MOV (비디오)": "mov"
+        },
+        "압축 파일": {
+            "ZIP": "zip",
+            "RAR": "rar",
+            "TAR": "tar",
+            "7z": "7z"
+        },
+        "코드/스크립트 파일": {
+            "Python": "py",
+            "HTML": "html",
+            "HTML (HTM)": "htm",
+            "JavaScript": "js",
+            "CSS": "css",
+            "XML": "xml",
+            "JSON": "json",
+            "CSV": "csv"
+        },
+        "기타 파일": {
+            "Adobe Illustrator": "ai",
+            "Photoshop": "psd",
+            "3D 모델 (OBJ)": "obj"
+        }
+    },
+    "naver_search_api_endpoints": {
+        "news": "뉴스",
+        "encyc": "백과사전",
+        "blog": "블로그",
+        "shop": "쇼핑",
+        "webkr": "웹 문서",
+        "image": "이미지",
+        "doc": "전문정보",
+        "kin": "지식iN",
+        "book": "책",
+        "cafearticle": "카페글",
+        "adult": "성인 검색어 판별 결과 반환",
+        "errata": "한영 오류 변환 결과 반환",
+        "local": "지역별 업체 및 상호"
+    },
+    "daum_search_api_endpoints": {
+        "web": "웹 문서",
+        "vclip": "동영상",
+        "image": "이미지",
+        "blog": "블로그",
+        "book": "책",
+        "cafe": "카페"
+    }
+}
