@@ -200,9 +200,12 @@ def save2csv(df:pd.DataFrame) -> None:
 
 
 if __name__=="__main__":
-    import time
+    import sys, time
+    if len(sys.argv) > 1:
+        query = ' '.join(sys.argv[1:])
+    else:
+        query = input("검색하고 싶은 내용을 입력하세요: ").strip() or "k-pop"
     s = time.time()
-    query = "k-pop"
     k = 5
     file_type_li = []
     n_api, d_api = "webkr", "web"
